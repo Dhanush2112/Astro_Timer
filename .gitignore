@@ -53,3 +53,13 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Ignore CMake build output directory
+build/
+
+# IDE / Build system artifacts
+.vs/
+CMakeFiles/
+*.vcxproj*
+*.vcxproj.filters
+.project
