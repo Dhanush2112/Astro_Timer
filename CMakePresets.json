@@ -1,0 +1,75 @@
+﻿{
+    "version": 6,
+    "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+
+    "configurePresets": [
+        {
+            "name": "base-iar-ra4c1",
+            "hidden": true,
+            "generator": "Ninja",
+            "toolchainFile": "${sourceDir}/Code/HAL/RA4C1/toolchain_iar.cmake",
+            "warnings": { "dev": false }
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug - IAR / RA4C1",
+            "description": "Full debug info, no optimisation",
+            "inherits": "base-iar-ra4c1",
+            "binaryDir": "${sourceDir}/build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release - IAR / RA4C1",
+            "description": "Optimised for size (-Ohz), no debug info",
+            "inherits": "base-iar-ra4c1",
+            "binaryDir": "${sourceDir}/build/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "test",
+            "displayName": "ModuleTest - GCC / Host",
+            "description": "Host GCC build of all module tests, run via CTest",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/test",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTS": "ON",
+                "CMAKE_C_COMPILER": "C:/FW_Build_Tools/Mingw32/bin/gcc.exe"
+            },
+            "warnings": { "dev": false }
+        }
+    ],
+
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Build Debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "displayName": "Build Release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "test",
+            "displayName": "Build Module Tests",
+            "configurePreset": "test"
+        }
+    ],
+
+    "testPresets": [
+        {
+            "name": "test",
+            "displayName": "Run Module Tests",
+            "configurePreset": "test",
+            "output": { "outputOnFailure": true },
+            "execution": { "stopOnFailure": true }
+        }
+    ]
+}

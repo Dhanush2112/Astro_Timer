@@ -1,0 +1,36 @@
+/*--------------------------------------------------------------------
+ * RA4C1.icf — IAR Linker Configuration File
+ * Target  : Renesas RA4C1  (Arm Cortex-M33, little-endian)
+ *
+ * Memory map
+ * ----------
+ *   Code Flash   256 KB   0x00000000 – 0x0003FFFF
+ *   SRAM          64 KB   0x20000000 – 0x2000FFFF
+ *
+ * Adjust CSTACK_SIZE and HEAP_SIZE to suit the application.
+ *--------------------------------------------------------------------*/
+
+define symbol CSTACK_SIZE = 0x1000;   /* 4 KB — main stack          */
+define symbol HEAP_SIZE   = 0x0800;   /* 2 KB — malloc / newlib heap */
+
+/*-- Memory regions -----------------------------------------------------*/
+define memory mem with size = 4G;
+
+define region FLASH_region = mem:[from 0x00000000 size 0x00040000];
+define region RAM_region   = mem:[from 0x20000000 size 0x00010000];
+
+/*-- Blocks -------------------------------------------------------------*/
+define block CSTACK with alignment = 8, size = CSTACK_SIZE { };
+define block HEAP   with alignment = 8, size = HEAP_SIZE   { };
+
+/*-- Initialisation policy ----------------------------------------------*/
+initialize by copy { readwrite };
+do not initialize  { section .noinit };
+
+/*-- Placement ----------------------------------------------------------*/
+/* Interrupt vector table must be first in flash */
+place at start of FLASH_region { readonly section .intvec };
+place in FLASH_region          { readonly };
+place in RAM_region            { readwrite,
+                                 block CSTACK,
+                                 block HEAP };

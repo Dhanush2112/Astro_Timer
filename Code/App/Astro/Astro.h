@@ -5,12 +5,12 @@
 #ifndef ASTRO_H
 #define ASTRO_H
 
-#include <stdint.h>
+#include "common.h"
 
 void Astro_Init(void);
-void Astro_UpdateForDate(int year, int month, int day);
+void Astro_UpdateForDate(int16_t year, uint8_t month, uint8_t day);
 // Returns sunrise and sunset minutes from midnight (local time)
-int Astro_GetSunriseMinutes(void);
-int Astro_GetSunsetMinutes(void);
+int16_t Astro_GetSunriseMinutes(void);
+int16_t Astro_GetSunsetMinutes(void);
 
 #endif /* ASTRO_H */

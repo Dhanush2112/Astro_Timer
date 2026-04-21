@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  format:
+    name: Clang-Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Run clang-format check
+        run: |
+          set -e
+          FILES=$(git ls-files "Code/**/*.c" "Code/**/*.h" | tr '\n' ' ')
+          if [ -z "$FILES" ]; then echo "No C files to format"; exit 0; fi
+          echo "Checking formatting for: $FILES"
+          # create a temporary branch to test formatting
+          git checkout --quiet --detach
+          mkdir -p /tmp/format-check
+          cp -r . /tmp/format-check
+          pushd /tmp/format-check
+          for f in $FILES; do
+            clang-format -i "$f"
+          done
+          if ! git diff --quiet; then
+            echo "Formatting issues found. Please run clang-format on the following files:";
+            git --no-pager diff --name-only
+            exit 1
+          fi
+          popd
+
+  build:
+    name: CMake Build
+    runs-on: ubuntu-latest
+    needs: format
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake clang-format
+
+      - name: Configure CMake
+        run: mkdir -p build && cd build && cmake ..
+
+      - name: Build
+        run: cmake --build build --config Debug -- -j 2
+
+      - name: Run unit tests
+        run: |
+          cd build
+          if [ -f CTestTestfile.cmake ]; then
+            ctest --output-on-failure
+          else
+            echo "No tests configured"
+          fi

@@ -4,17 +4,28 @@
 
 #include "Astro.h"
 
-static int sunrise_minutes = 6*60; // 06:00
-static int sunset_minutes = 18*60; // 18:00
+static int16_t g_SunriseMinutes = 6 * 60;  // 06:00
+static int16_t g_SunsetMinutes = 18 * 60;  // 18:00
 
-void Astro_Init(void) {
-    // placeholder initialization
+void Astro_Init(void)
+{
+  // placeholder initialization
 }
 
-void Astro_UpdateForDate(int year, int month, int day) {
-    (void)year; (void)month; (void)day;
-    // placeholder: keep defaults
+void Astro_UpdateForDate(int16_t year, uint8_t month, uint8_t day)
+{
+  (void)year;
+  (void)month;
+  (void)day;
+  // placeholder: keep defaults
 }
 
-int Astro_GetSunriseMinutes(void) { return sunrise_minutes; }
-int Astro_GetSunsetMinutes(void) { return sunset_minutes; }
+int16_t Astro_GetSunriseMinutes(void)
+{
+  return g_SunriseMinutes;
+}
+
+int16_t Astro_GetSunsetMinutes(void)
+{
+  return g_SunsetMinutes;
+}
