@@ -4,17 +4,17 @@
 
     "configurePresets": [
         {
-            "name": "base-iar-ra4c1",
+            "name": "base-gcc-rl78l13",
             "hidden": true,
             "generator": "Ninja",
-            "toolchainFile": "${sourceDir}/Code/HAL/RA4C1/toolchain_iar.cmake",
+            "toolchainFile": "${sourceDir}/Code/HAL/RL78_L13/toolchain_gcc.cmake",
             "warnings": { "dev": false }
         },
         {
             "name": "debug",
-            "displayName": "Debug - IAR / RA4C1",
-            "description": "Full debug info, no optimisation",
-            "inherits": "base-iar-ra4c1",
+            "displayName": "Debug - GCC / RL78-L13",
+            "description": "Minimal optimisation (-Og), full DWARF debug info",
+            "inherits": "base-gcc-rl78l13",
             "binaryDir": "${sourceDir}/build/debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -22,9 +22,9 @@
         },
         {
             "name": "release",
-            "displayName": "Release - IAR / RA4C1",
-            "description": "Optimised for size (-Ohz), no debug info",
-            "inherits": "base-iar-ra4c1",
+            "displayName": "Release - GCC / RL78-L13",
+            "description": "Size-optimised (-Os), no debug info",
+            "inherits": "base-gcc-rl78l13",
             "binaryDir": "${sourceDir}/build/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"

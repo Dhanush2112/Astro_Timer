@@ -1,11 +1,13 @@
 /*--------------------------------------------------------------------
- * RA4C1.icf — IAR Linker Configuration File
- * Target  : Renesas RA4C1  (Arm Cortex-M33, little-endian)
+ * RL78_L13.icf — IAR Linker Configuration File (kept for reference only;
+ * the active build uses RL78_L13.ld with GCC rl78-elf)
+ * Target  : Renesas RL78/L13  (R5F10WMG)
  *
  * Memory map
  * ----------
- *   Code Flash   256 KB   0x00000000 – 0x0003FFFF
- *   SRAM          64 KB   0x20000000 – 0x2000FFFF
+ *   Code Flash   128 KB   0x00000 – 0x1FFFF
+ *   Data Flash     4 KB   0xF1000 – 0xF1FFF
+ *   RAM            8 KB   0xFDF00 – 0xFFEFF
  *
  * Adjust CSTACK_SIZE and HEAP_SIZE to suit the application.
  *--------------------------------------------------------------------*/

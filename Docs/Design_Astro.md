@@ -54,16 +54,17 @@ arithmetic involving catastrophic cancellation in single precision.
 
 ---
 
-### Hardware Constraints (RA4C1)
+### Hardware Constraints (RL78/L13)
 
 The target MCU defines hard constraints that directly affect algorithm choice:
 
 | Constraint | Detail |
 |---|---|
-| **Core** | Arm Cortex-M33 |
-| **FPU** | FPv5-SP — hardware single-precision only; `double` operations use IAR software library |
-| **Flash** | 256 KB |
-| **SRAM** | 64 KB |
+| **Core** | RL78 (16-bit) |
+| **FPU** | None — all floating-point operations use the GCC soft-float library |
+| **ROM (code flash)** | 128 KB |
+| **Data flash** | 4 KB |
+| **RAM** | 8 KB |
 | **Execution model** | Bare-metal; `Astro_UpdateForDate()` called once per day, not in a real-time loop |
 | **Dynamic allocation** | None used; all storage must be static or stack |
 
@@ -78,7 +79,7 @@ The target MCU defines hard constraints that directly affect algorithm choice:
 | **Valid year range** | 1999–2015 | 1950–2050 | Broad (unvalidated) | 1950–2050 | −2000 to +6000 |
 | **Covers product lifetime (>2036)** | No | Yes | Unknown | Yes | Yes |
 | **`double` required?** | No | No | No | No | Yes — entire pipeline |
-| **HW FPU utilised?** | Yes (float32) | Yes (float32, 100%) | Yes (float32) | Yes (float32) | No (all SW emulated) |
+| **HW FPU utilised?** | No (SW only) | No (SW only) | No (SW only) | No (SW only) | No (all SW emulated) |
 | **Lookup tables (ROM)** | None | None | None | None | ~6–8 KB |
 | **Code size (approx.)** | ~50 lines | ~130 lines | ~50 lines | ~80 lines | ~600 lines |
 | **Implementation effort** | Very low | Low | Very low | Low | High |
@@ -103,8 +104,9 @@ NOAA is the best fit for this product. The rationale:
    integer arithmetic (`int32_t`). The century offset `JDN − 2,451,545` is an exact integer
    subtraction; the result (~9,600 for 2026) is well within `float32_t`'s exact integer range
    (2²⁴ = 16,777,216). Dividing by 36525.0f in `float32_t` gives T ≈ 0.26 with ~10⁻⁷ relative
-   error, contributing less than 0.1 minute to the final result. Every FPU operation uses
-   hardware single-precision, fully utilising the FPv5-SP.
+   error, contributing less than 0.1 minute to the final result. All FPU operations are handled
+   by the GCC soft-float library; since `Astro_UpdateForDate()` runs once per day the cost is
+   negligible.
 
 4. **Fastest to implement with a verified oracle.** NOAA's public JavaScript spreadsheet
    (nrel.gov/gis/solar-calculators/) computes to the same algorithm, making it trivial to generate
@@ -112,8 +114,8 @@ NOAA is the best fit for this product. The rationale:
 
 5. **No ROM tables.** The algorithm is entirely polynomial — no const arrays in flash.
 
-SPA was rejected because it mandates `double` throughout (all FPU operations fall back to IAR
-software library on FPv5-SP), adds ~6–8 KB of lookup tables, and its ±0.5 min accuracy provides
+SPA was rejected because it mandates `double` throughout (doubling the software library overhead
+for every operation), adds ~6–8 KB of lookup tables, and its ±0.5 min accuracy provides
 no advantage for a 1-minute-resolution product. Walraven was rejected on accuracy grounds.
 
 ---
@@ -305,7 +307,7 @@ g_SunsetMinutes  = (uint16_t)roundf(Sunset_local)    clamped to [0, 1439]
   arithmetic. The century offset `JDN − 2,451,545` is an exact integer subtraction whose result
   (~9,600) is representable without rounding in `float32_t`. The subsequent division by 36525.0f
   contributes <0.1 minute of error to the final result. Every floating-point operation in the
-  module executes on the FPv5-SP hardware FPU. No `double` type is introduced; `common.h` does
+  module executes via the GCC soft-float library. No `double` type is introduced; `common.h` does
   not require a `float64_t` typedef for this module.
 
 - **`Astro_SetLocation()` stores location as module state.** Location changes only when the user
@@ -317,9 +319,12 @@ g_SunsetMinutes  = (uint16_t)roundf(Sunset_local)    clamped to [0, 1439]
   NOAA Solar Noon formula: `Noon_UTC = 720 − 4·longitude − E`. Eastward locations produce earlier
   noon times, which is correct.
 
-- **Timezone: signed integer hours.** `int8_t` covers −12 to +14 (the full valid UTC offset range).
-  Fractional-hour offsets (e.g. UTC+5:30) are not supported; the product specification does not
-  require them.
+- **Timezone: whole hours, `int8_t`.** `int8_t` covers −12 to +14 (the full valid UTC offset
+  range). Fractional-hour offsets (e.g. UTC+5:30) are not supported; the product specification
+  does not require them. Note: CfgDataStore stores timezone as `int16_t` **minutes** (e.g. UTC+1
+  = +60, UTC−5 = −300). The Scheduler is responsible for converting before calling
+  `Astro_SetLocation()`: `timezone_hours = (int8_t)(timezone_offset_minutes / 60)`. This
+  conversion must be documented and tested in the Scheduler, not here.
 
 - **Sentinel values for polar conditions.** When `|cos_HA| > 1`, `ASTRO_SUNRISE_NONE` and
   `ASTRO_SUNSET_NONE` (both `0xFFFF` / `UINT16_MAX`) are stored. `0xFFFF` is used as the sentinel
@@ -475,14 +480,24 @@ independently of any other module.
 ## Data Flow
 
 ```
-CfgDataStore (latitude, longitude, timezone, astro_offset)
-        |
-        v
-Astro_UpdateForDate(year, month, day)  <-- called by Scheduler at midnight
-        |
-        v
- [internal: g_SunriseMinutes, g_SunsetMinutes]
-        |
-        +---> Astro_GetSunriseMinutes()  --> Scheduler
-        +---> Astro_GetSunsetMinutes()   --> Scheduler
+CfgDataStore
+  ├─ latitude, longitude, timezone_offset_minutes (int16_t, stored as minutes)
+  │        │
+  │        │  Scheduler converts: timezone_hours = (int8_t)(timezone_offset_minutes / 60)
+  │        v
+  │  Astro_SetLocation(latitude, longitude, timezone_hours)   <- startup / location change
+  │
+  └─ astro_offset_minutes ──────────────────────────────────────────────┐
+                                                                        │  (applied by Scheduler,
+DateTime (year, month, day)                                             │   NOT inside Astro)
+        │                                                               │
+        v                                                               │
+Astro_UpdateForDate(year, month, day)   <- once per day at midnight     │
+        │                                                               v
+        v                                          Scheduler evaluates each minute:
+ [internal: g_SunriseMinutes, g_SunsetMinutes]     effective_sunrise = sunrise_raw + astro_offset
+  (raw, no offset applied)                         effective_sunset  = sunset_raw  + astro_offset
+        │
+        +---> Astro_GetSunriseMinutes()  --> Scheduler  (raw minutes; 0xFFFF = polar night)
+        +---> Astro_GetSunsetMinutes()   --> Scheduler  (raw minutes; 0xFFFF = polar day)
 ```

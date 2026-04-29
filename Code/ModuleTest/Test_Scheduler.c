@@ -3,7 +3,7 @@
  */
 
 #include "Scheduler.h"
-#include <unity_fixture.h>
+#include "Test_Common.h"
 
 TEST_GROUP(Scheduler);
 
