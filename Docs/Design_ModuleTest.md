@@ -14,7 +14,7 @@ functions are stubbed (they compile and link but perform no hardware access), so
 logic can be exercised in isolation.
 
 The build is controlled by the `EMBEDDED` preprocessor guard: when `EMBEDDED` is not defined,
-`main()` is provided by the test runner (`ModulesTest_Main.c`) rather than `HAL/RA4C1/main.c`.
+`main()` is provided by the test runner (`ModulesTest_Main.c`) rather than `HAL/RL78_L13/main.c`.
 
 ---
 

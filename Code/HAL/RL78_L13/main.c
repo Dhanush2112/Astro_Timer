@@ -1,14 +1,14 @@
 /* main.c
- * Platform entry point for RA4C1.
+ * Platform entry point for RL78/L13 (R5F10WMG).
  * Initialises all hardware peripherals, then all application modules,
  * then runs the bare-metal main loop.
  */
 
-#include "../../App/Astro/Astro.h"
-#include "../../App/CfgDataStore/ParameterBlock.h"
-#include "../../App/DateTime/DateTime.h"
-#include "../../App/LUI/LUI.h"
-#include "../../App/Scheduler.h"
+#include "App/Astro/Astro.h"
+#include "App/CfgDataStore/ParameterBlock.h"
+#include "App/DateTime/DateTime.h"
+#include "App/LUI/LUI.h"
+#include "App/Scheduler.h"
 #include "HAL_Display/HAL_Display.h"
 #include "HAL_GPIO/HAL_GPIO.h"
 #include "HAL_NVM/HAL_NVM.h"
@@ -17,7 +17,7 @@
 /* Set to true by the RTC 1-minute periodic interrupt handler */
 static volatile bool g_OneMinuteFlag = false;
 
-/* Called from the RA4C1 RTC periodic interrupt (configured for 1-minute interval) */
+/* Called from the RL78/L13 RTC periodic interrupt (configured for 1-minute interval) */
 void HAL_RTC_MinuteCallback(void)
 {
   g_OneMinuteFlag = true;

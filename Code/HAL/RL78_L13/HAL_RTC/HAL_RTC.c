@@ -1,5 +1,5 @@
 /* HAL_RTC.c
- * Hardware abstraction for the real-time clock peripheral — RA4C1 implementation.
+ * Hardware abstraction for the real-time clock peripheral — RL78/L13 implementation.
  * Handles backup battery retention and 1-minute periodic interrupt generation.
  */
 
@@ -7,7 +7,7 @@
 
 void HAL_RTC_Init(void)
 {
-  /* TODO: configure RA4C1 RTC peripheral, enable backup power, set 1-minute interrupt */
+  /* TODO: configure RL78/L13 RTC peripheral, enable backup power, set 1-minute interrupt */
 }
 
 void HAL_RTC_GetTime(int16_t *year,
@@ -23,7 +23,7 @@ void HAL_RTC_GetTime(int16_t *year,
   (void)hour;
   (void)minute;
   (void)second;
-  /* TODO: read time registers from RA4C1 RTC */
+  /* TODO: read time registers from RL78/L13 RTC */
 }
 
 void HAL_RTC_SetTime(int16_t year,
@@ -39,5 +39,5 @@ void HAL_RTC_SetTime(int16_t year,
   (void)hour;
   (void)minute;
   (void)second;
-  /* TODO: write time registers on RA4C1 RTC */
+  /* TODO: write time registers on RL78/L13 RTC */
 }

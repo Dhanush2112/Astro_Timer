@@ -1,6 +1,6 @@
 # Astro Timer
 
-An astronomical timer firmware for the **Renesas RA4C1** microcontroller (Arm Cortex-M33).  
+An astronomical timer firmware for the **Renesas RL78/L13** microcontroller (RL78 16-bit core).  
 The device calculates local sunrise/sunset times from a configurable geographic location and controls output channels accordingly.
 
 ---
@@ -9,11 +9,12 @@ The device calculates local sunrise/sunset times from a configurable geographic 
 
 | Item | Detail |
 |---|---|
-| MCU | Renesas RA4C1 (Arm Cortex-M33, 100 MHz) |
-| FPU | FPv5-SP (hardware single-precision only) |
-| Flash | 256 KB at `0x00000000` |
-| SRAM | 64 KB at `0x20000000` |
-| Compiler | IAR Embedded Workbench for ARM 9.2 |
+| MCU | Renesas RL78/L13 (RL78 16-bit core, 32 MHz) |
+| FPU | None (software floating-point only) |
+| ROM (code flash) | 128 KB |
+| Data flash | 4 KB |
+| RAM | 8 KB |
+| Compiler | GCC rl78-elf (rl78-elf-gcc) |
 
 ---
 
@@ -33,10 +34,11 @@ Code/
     DateTime/                Date/time helpers and conversions
     LUI/                     Local User Interface (display + input handling)
   HAL/
-    RA4C1/
+    RL78_L13/
       main.c                 Entry point and system initialisation
-      toolchain_iar.cmake    IAR ARM CMake toolchain file
-      RA4C1.icf              IAR linker config (flash/SRAM/stack/heap regions)
+      toolchain_gcc.cmake    GCC rl78-elf CMake toolchain file
+      RL78_L13.ld            GCC linker script (flash/RAM/stack regions)
+      RL78_L13.icf           IAR linker script (reference only; not used by active build)
       HAL_Display/           Display driver abstraction
       HAL_GPIO/              GPIO driver abstraction
       HAL_NVM/               Non-volatile memory driver abstraction
@@ -67,17 +69,17 @@ CMake 3.25+ with Ninja and three presets defined in `CMakePresets.json`:
 
 | Preset | Toolchain | Output | Build dir |
 |---|---|---|---|
-| `debug` | IAR ARM | `Astro_01.00.elf/.hex/.bin` (no optimisation, full debug) | `build/debug/` |
-| `release` | IAR ARM | `Astro_01.00.elf/.hex/.bin` (size-optimised `-Ohz`) | `build/release/` |
+| `debug` | GCC rl78-elf | `Astro_01.00.elf/.hex/.bin` (minimal opt `-Og`, full DWARF debug) | `build/debug/` |
+| `release` | GCC rl78-elf | `Astro_01.00.elf/.hex/.bin` (size-optimised `-Os`) | `build/release/` |
 | `test` | Host GCC (MinGW) | 4 test executables | `build/test/` |
 
 ### Prerequisites
 
 - CMake ≥ 3.25
 - Ninja
-- IAR Embedded Workbench for ARM 9.2 (firmware builds)  
-  Default install path: `C:/Program Files/IAR Systems/Embedded Workbench 9.2/arm`  
-  Override with the environment variable `IAR_ARM_TOOLCHAIN_DIR`.
+- GCC rl78-elf toolchain (firmware builds)  
+  The `bin` directory must be on the system `PATH` (standard installer default).  \
+  If not on PATH, set `RL78_GCC_TOOLCHAIN_DIR` to the bin directory before invoking CMake.
 - MinGW GCC ≥ 13 at `C:/FW_Build_Tools/Mingw32/bin/gcc.exe` (test build)
 - Internet access on first test configure (Unity v2.6.1 fetched via `FetchContent`)
 
@@ -118,6 +120,6 @@ All four tests must pass before merging changes.
 
 ## Key design decisions
 
-- **`float32_t` for coordinates** — `typedef float float32_t` in `common.h`. The RA4C1 FPv5-SP FPU accelerates single-precision natively; double is software-emulated. City-level resolution (≈ 0.0001°) is adequate for sunrise/sunset.
+- **`float32_t` for coordinates** — `typedef float float32_t` in `common.h`. The RL78/L13 has no hardware FPU; all floating-point operations use the GCC soft-float library. Single-precision (`float`) is used throughout to minimise code size and execution time relative to `double`. City-level resolution (≈ 0.0001°) is adequate for sunrise/sunset.
 - **CfgDataStore parameter-block engine** — parameters are registered by pointer into a RAM mirror struct. Writes go through a two-phase validate-then-commit cycle. Blocks carry a version counter enabling efficient change detection without polling.
-- **HAL abstraction** — all hardware access is isolated in `Code/HAL/RA4C1/`. Porting to a different Renesas variant requires only a new HAL folder and toolchain file.
+- **HAL abstraction** — all hardware access is isolated in `Code/HAL/RL78_L13/`. Porting to a different Renesas variant requires only a new HAL folder and toolchain file.

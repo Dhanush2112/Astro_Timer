@@ -1,12 +1,12 @@
 /* HAL_Display.c
- * Hardware abstraction for status LEDs and display indicators — RA4C1 implementation.
+ * Hardware abstraction for status LEDs and display indicators — RL78/L13 implementation.
  */
 
 #include "HAL_Display.h"
 
 void HAL_Display_Init(void)
 {
-  /* TODO: configure indicator LED GPIO pins on RA4C1 */
+  /* TODO: configure indicator LED GPIO pins on RL78/L13 */
 }
 
 void HAL_Display_SetChannelLed(uint8_t channel, bool on)

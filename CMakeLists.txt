@@ -1,7 +1,7 @@
 ﻿# CMakeLists.txt
 # Root build script for Astro Timer firmware.
 #
-# Firmware build (IAR, default):
+# Firmware build (GCC rl78-elf):
 #   cmake --preset debug    then  cmake --build --preset debug
 #   cmake --preset release  then  cmake --build --preset release
 #
@@ -29,29 +29,29 @@ set(APP_INCLUDES
 )
 
 set(HAL_SOURCES
-    ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/main.c
-    ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/HAL_Display/HAL_Display.c
-    ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/HAL_GPIO/HAL_GPIO.c
-    ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/HAL_NVM/HAL_NVM.c
-    ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/HAL_RTC/HAL_RTC.c
+    ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/main.c
+    ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/HAL_Display/HAL_Display.c
+    ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/HAL_GPIO/HAL_GPIO.c
+    ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/HAL_NVM/HAL_NVM.c
+    ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/HAL_RTC/HAL_RTC.c
 )
 
 # ---------------------------------------------------------------------------
 # Build mode: set BUILD_TESTS=ON (via preset) to compile and run host tests.
-# Default OFF -> firmware build with IAR toolchain.
+# Default OFF -> firmware build with GCC rl78-elf toolchain.
 # ---------------------------------------------------------------------------
 option(BUILD_TESTS "Build module tests on the host using GCC" OFF)
 
 if(BUILD_TESTS)
     # -----------------------------------------------------------------------
-    # Module test build  -  host GCC, no IAR toolchain required
+    # Module test build  -  host GCC, no RL78 toolchain required
     # -----------------------------------------------------------------------
     project(AstroTimerModuleTest LANGUAGES C)
     enable_testing()
     add_subdirectory(Code/ModuleTest)
 else()
     # -----------------------------------------------------------------------
-    # Firmware build  -  IAR ARM toolchain (passed via CMAKE_TOOLCHAIN_FILE)
+    # Firmware build  -  GCC rl78-elf toolchain (passed via CMAKE_TOOLCHAIN_FILE)
     # -----------------------------------------------------------------------
     project(AstroTimer LANGUAGES C ASM)
 
@@ -74,7 +74,7 @@ else()
 
     target_include_directories(${TARGET_EXE} PRIVATE
         ${APP_INCLUDES}
-        ${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1
+        ${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13
     )
 
     target_compile_definitions(${TARGET_EXE} PRIVATE
@@ -83,17 +83,17 @@ else()
     )
 
     target_link_options(${TARGET_EXE} PRIVATE
-        --config "${CMAKE_SOURCE_DIR}/Code/HAL/RA4C1/RA4C1.icf"
-        --map    "${CMAKE_BINARY_DIR}/${OUTPUT_NAME}.map"
+        -T "${CMAKE_SOURCE_DIR}/Code/HAL/RL78_L13/RL78_L13.ld"
+        -Wl,--gc-sections
+        -nostdlib
+        "LINKER:-Map=${CMAKE_BINARY_DIR}/${OUTPUT_NAME}.map"
     )
 
-    set(IELFTOOL "${IAR_TOOLCHAIN_PATH}/bin/ielftool.exe")
-
     add_custom_command(TARGET ${TARGET_EXE} POST_BUILD
-        COMMAND "${IELFTOOL}" --ihex
+        COMMAND "${CMAKE_OBJCOPY}" -O ihex
                 "$<TARGET_FILE:${TARGET_EXE}>"
                 "${CMAKE_BINARY_DIR}/${OUTPUT_NAME}.hex"
-        COMMAND "${IELFTOOL}" --bin
+        COMMAND "${CMAKE_OBJCOPY}" -O binary
                 "$<TARGET_FILE:${TARGET_EXE}>"
                 "${CMAKE_BINARY_DIR}/${OUTPUT_NAME}.bin"
         COMMENT "Generating ${OUTPUT_NAME}.hex and ${OUTPUT_NAME}.bin"

@@ -4,7 +4,7 @@
  * in RunAllTests() of the accompanying test file.
  */
 
-#include <unity_fixture.h>
+#include "Test_Common.h"
 
 extern void RunAllTests(void);
 

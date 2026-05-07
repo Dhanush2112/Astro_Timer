@@ -5,7 +5,7 @@
 #ifndef DATETIME_H
 #define DATETIME_H
 
-#include "../common.h"
+#include "common.h"
 
 void DateTime_Init(void);
 void DateTime_Get(int16_t *year,

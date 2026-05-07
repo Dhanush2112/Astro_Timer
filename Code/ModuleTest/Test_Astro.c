@@ -2,7 +2,7 @@
  * Unit tests for the Astro module (sunrise/sunset calculation).
  */
 
-#include <unity_fixture.h>
+#include "Test_Common.h"
 
 #include "Astro/Astro.h"
 
